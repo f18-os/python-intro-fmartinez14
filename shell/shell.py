@@ -26,13 +26,28 @@ while(1):
         os.write(1, ("Child: My pid==%d.  Parent's pid=%d\n" % (os.getpid(), pid)).encode())
         for dir in re.split(":", os.environ['PATH']): # try each directory in the path
             program = "%s/%s" % (dir, UserInput[0])
-            os.write(1, ("Child:  ...trying to exec %s\n" % program).encode())
             try:
+                if '<' in UserInput:
+                    getIndex = UserInput.index('<')
+                    open(UserInput[getIndex+1],"w+")
+                    writeFile= os.open(UserInput[getIndex+1],os.O_WRONLY)
+                    os.dup2(writeFile,1)
+                    UserInput= UserInput[:getIndex]
+                if '>' in UserInput:
+                    getIndex = UserInput.index('>')
+                    newParams = open(UserInput[getIndex+1],"r").read().strip()
+                    command = UserInput[0];
+                    UserInput.clear()
+                    UserInput.append(command)
+                    UserInput= UserInput+ newParams.split(' ')
+
                 os.execve(program, UserInput, os.environ) # try to exec program
             except FileNotFoundError:             # ...expected
                 pass                              # ...fail quietly
-
-        os.write(2, ("Child:    Could not exec %s\n" % args[0]).encode())
+            except ValueError:
+                pass
+                
+        os.write(2, ("Child:    Could not exec %s\n" % UserInput[0]).encode())
         sys.exit(0)                 # terminate with error
 
     else:                           # parent (forked ok)
