@@ -8,6 +8,16 @@ To test the program, the given program wordCountText.py was given , and its usag
 
 `$ python3 wordCountTest.py declaration.txt myOutput.txt declarationKey.txt`
 
+Similarly, the shell folder contains a shell project that is run by using the following command:
+
+
+`$ python3 shell.py`
+
+It works using a bash-like commands which gets executed using the execv tool.
+
+This shell was done with documentation from the OS library in python at:
+
+https://docs.python.org/2/library/os.html
 
  This project was done in Python 3.
 
