@@ -9,24 +9,16 @@ while(1): #Execute until Control C or exit command.
         pathToUse= os.environ['PATH']
         try:
             PS1 = os.environ['ps1']
-        except:
+        except: #Check for PS1 Existing
             PS1="$ "
 
         instruction = ""
         instruction = input(os.getcwd() + PS1) #Obtain command to run.
         UserInput = instruction.split(" ")
 
-        if "cd" in UserInput:
+        if "cd" in UserInput: #Change directory
             getIndex = UserInput.index('cd')
             os.chdir(UserInput[getIndex + 1])
-
-        if "fg" in UserInput:
-            desiredProcess = UserInput[1]
-            getIndex= Backgroundlist.index(UserInput[1])
-            desiredOutput = open("currOut" + desiredProcess + ".tmp","r").read().strip()
-            print(desiredOutput)
-            del Backgroundlist[getIndex]
-
 
         rc = os.fork()
 
@@ -39,8 +31,7 @@ while(1): #Execute until Control C or exit command.
             break;
 
         elif rc == 0:                   # child
-            # os.write(1, ("Child: My pid==%d.  Parent's pid=%d\n" % (os.getpid(), pid)).encode())
-            if len(UserInput) > 0 and UserInput[0] != "" and UserInput[0][0] == '/':
+            if len(UserInput) > 0 and UserInput[0] != "" and UserInput[0][0] == '/': #Checks for a direct path, if not , resort to $PATH
                 tempVar = UserInput[0].split("/")
                 commandToUse= tempVar[-1]
                 UserInput[0] = commandToUse
@@ -63,24 +54,23 @@ while(1): #Execute until Control C or exit command.
                         UserInput.append(command)
                         UserInput= UserInput+ newParams.split(' ')
 
-                    if '|' in UserInput:
+                    if '|' in UserInput: #Gets a pipe to execute commands and use them as process.
                         getIndex = UserInput.index('|')
                         extraParams = UserInput[:getIndex]
                         UserInput = UserInput[getIndex+1:]
                         extraPipeCommand = subprocess.Popen(extraParams,stdout=subprocess.PIPE)
-                        addMe= extraPipeCommand.communicate()
+                        addMe= extraPipeCommand.communicate() #Gets outway pipe.
                         addMe = addMe[0].decode("utf-8").strip()
                         UserInput.append(addMe)
-                        print(str(UserInput))
 
                     if '&' in UserInput:
                         getIndex= UserInput.index('&')
                         del UserInput[getIndex]
-                        writeFile= os.open(os.devnull,os.O_WRONLY) #According to python documentation, this sets the write only flag.
+                        writeFile= os.open(os.devnull,os.O_WRONLY) #According to python documentation, this sets the write only flag. We write to a null file so the output isnt shown.
                         os.dup2(writeFile,1) #Duplicate the file
 
-                    if len(UserInput) < 1 or UserInput[0] == "" or UserInput[0] == "cd" or UserInput[0] == "fg":
-                        sys.exit(0)
+                    if len(UserInput) < 1 or UserInput[0] == "" or UserInput[0] == "cd":
+                        sys.exit(0) #Kill the kid without exec if its an implemented feature.
 
                     os.execve(program, UserInput, os.environ) # try to exec program
                 except FileNotFoundError:             # ...expected
@@ -89,19 +79,19 @@ while(1): #Execute until Control C or exit command.
                     pass
 
             os.write(2, ("Could not find this command: %s\n" % UserInput[0]).encode())
-            sys.exit(0)                 # terminate with error
+            sys.exit(0)
 
-        else:                           # parent (forked ok)
-            if '&' in UserInput:
+        else:
+            if '&' in UserInput: #Do not wait if the # is present.
                 pass
 
             else:
                 childPidCode = os.wait() #Wait until child dies.
                 code, error = childPidCode
-                if error != 0:
+                if error != 0: #If it was not sucessful, report it.
                     print("Process terminated with this exit code:  " + str(error))
 
-    except EOFError:
+    except EOFError: #If eof is passed to program, termiante.
         print("")
         sys.exit(0)
 sys.exit(0) #Kill process if control c or exit.
