@@ -1,18 +1,31 @@
 #! /usr/bin/env python3
 
-import os, sys, time, re , subprocess
+import os, sys, time, re , subprocess, io
+
 
 pid = os.getpid()
-
 while(1): #Execute until Control C or exit command.
     try:
         pathToUse= os.environ['PATH']
-        instruction = input(os.getcwd() + "$ ") #Obtain command to run.
+        try:
+            PS1 = os.environ['ps1']
+        except:
+            PS1="$ "
+
+        instruction = ""
+        instruction = input(os.getcwd() + PS1) #Obtain command to run.
         UserInput = instruction.split(" ")
 
         if "cd" in UserInput:
             getIndex = UserInput.index('cd')
             os.chdir(UserInput[getIndex + 1])
+
+        if "fg" in UserInput:
+            desiredProcess = UserInput[1]
+            getIndex= Backgroundlist.index(UserInput[1])
+            desiredOutput = open("currOut" + desiredProcess + ".tmp","r").read().strip()
+            print(desiredOutput)
+            del Backgroundlist[getIndex]
 
 
         rc = os.fork()
@@ -26,16 +39,13 @@ while(1): #Execute until Control C or exit command.
             break;
 
         elif rc == 0:                   # child
-            os.write(1, ("Child: My pid==%d.  Parent's pid=%d\n" % (os.getpid(), pid)).encode())
-            if UserInput[0][0] == '/':
+            # os.write(1, ("Child: My pid==%d.  Parent's pid=%d\n" % (os.getpid(), pid)).encode())
+            if len(UserInput) > 0 and UserInput[0] != "" and UserInput[0][0] == '/':
                 tempVar = UserInput[0].split("/")
                 commandToUse= tempVar[-1]
                 UserInput[0] = commandToUse
                 tempVar= tempVar[:-1]
                 pathToUse = "/".join(tempVar)
-                print(pathToUse)
-
-
             for dir in re.split(":", pathToUse): # try each directory in the path
                 program = "%s/%s" % (dir, UserInput[0])
                 try:
@@ -63,8 +73,13 @@ while(1): #Execute until Control C or exit command.
                         UserInput.append(addMe)
                         print(str(UserInput))
 
+                    if '&' in UserInput:
+                        getIndex= UserInput.index('&')
+                        del UserInput[getIndex]
+                        writeFile= os.open(os.devnull,os.O_WRONLY) #According to python documentation, this sets the write only flag.
+                        os.dup2(writeFile,1) #Duplicate the file
 
-                    if len(UserInput) < 1 or UserInput[0] == "" or UserInput[0] == "cd":
+                    if len(UserInput) < 1 or UserInput[0] == "" or UserInput[0] == "cd" or UserInput[0] == "fg":
                         sys.exit(0)
 
                     os.execve(program, UserInput, os.environ) # try to exec program
@@ -77,12 +92,14 @@ while(1): #Execute until Control C or exit command.
             sys.exit(0)                 # terminate with error
 
         else:                           # parent (forked ok)
-            # os.write(1, ("Parent: My pid=%d.  Child's pid=%d\n" %
-            #              (pid, rc)).encode())
-            childPidCode = os.wait() #Wait until child dies.
-            code, error = childPidCode
-            if error != 0:
-                print("Process terminated with this exit code:  " + str(error))
+            if '&' in UserInput:
+                pass
+
+            else:
+                childPidCode = os.wait() #Wait until child dies.
+                code, error = childPidCode
+                if error != 0:
+                    print("Process terminated with this exit code:  " + str(error))
 
     except EOFError:
         print("")
