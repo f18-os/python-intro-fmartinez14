@@ -3,17 +3,12 @@
 import os, sys, time, re , subprocess
 
 pid = os.getpid()
-ExtraPipe = []
 
 while(1): #Execute until Control C or exit command.
     try:
-
-
+        pathToUse= os.environ['PATH']
         instruction = input(os.getcwd() + "$ ") #Obtain command to run.
         UserInput = instruction.split(" ")
-
-
-
 
         if "cd" in UserInput:
             getIndex = UserInput.index('cd')
@@ -32,7 +27,16 @@ while(1): #Execute until Control C or exit command.
 
         elif rc == 0:                   # child
             os.write(1, ("Child: My pid==%d.  Parent's pid=%d\n" % (os.getpid(), pid)).encode())
-            for dir in re.split(":", os.environ['PATH']): # try each directory in the path
+            if UserInput[0][0] == '/':
+                tempVar = UserInput[0].split("/")
+                commandToUse= tempVar[-1]
+                UserInput[0] = commandToUse
+                tempVar= tempVar[:-1]
+                pathToUse = "/".join(tempVar)
+                print(pathToUse)
+
+
+            for dir in re.split(":", pathToUse): # try each directory in the path
                 program = "%s/%s" % (dir, UserInput[0])
                 try:
                     if '>' in UserInput:
@@ -59,7 +63,8 @@ while(1): #Execute until Control C or exit command.
                         UserInput.append(addMe)
                         print(str(UserInput))
 
-                    if len(UserInput) < 1 or UserInput[0] == "":
+
+                    if len(UserInput) < 1 or UserInput[0] == "" or UserInput[0] == "cd":
                         sys.exit(0)
 
                     os.execve(program, UserInput, os.environ) # try to exec program
@@ -68,15 +73,17 @@ while(1): #Execute until Control C or exit command.
                 except ValueError: #Exception returned by the index if it does not contain > or <.
                     pass
 
-            os.write(2, ("Child:    Could not exec %s\n" % UserInput[0]).encode())
+            os.write(2, ("Could not find this command: %s\n" % UserInput[0]).encode())
             sys.exit(0)                 # terminate with error
 
         else:                           # parent (forked ok)
-            os.write(1, ("Parent: My pid=%d.  Child's pid=%d\n" %
-                         (pid, rc)).encode())
+            # os.write(1, ("Parent: My pid=%d.  Child's pid=%d\n" %
+            #              (pid, rc)).encode())
             childPidCode = os.wait() #Wait until child dies.
-            os.write(1, ("Parent: Child %d terminated with exit code %d\n" %
-                         childPidCode).encode())
+            code, error = childPidCode
+            if error != 0:
+                print("Process terminated with this exit code:  " + str(error))
+
     except EOFError:
         print("")
         sys.exit(0)
