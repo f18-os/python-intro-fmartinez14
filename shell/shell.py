@@ -75,11 +75,12 @@ while(1): #Execute until Control C or exit command.
                         del UserInput[getIndex]
                         open(os.devnull,"w+") #Open file.
                         writeFile= os.open(os.devnull,os.O_WRONLY) #According to python documentation, this sets the write only flag. We write to a null file so the output isnt shown.
+                        readFile= os.open(os.devnull,os.O_RDONLY)
+                        os.dup2(readFile,0)
                         os.dup2(writeFile,1) #Duplicate the file
 
                     if len(UserInput) < 1 or UserInput[0] == "" or UserInput[0] == "cd":
                         os._exit(0) #Kill the kid without exec if its an implemented feature.
-
 
                     os.execve(program, UserInput, os.environ) # try to exec program
                 except FileNotFoundError:             # ...expected
@@ -92,6 +93,8 @@ while(1): #Execute until Control C or exit command.
 
         else:
             if '&' in UserInput: #Do not wait if the # is present.
+                getIndex= UserInput.index('&')
+                del UserInput[getIndex]
                 pass
             else:
                 childPidCode = os.wait() #Wait until child dies.
