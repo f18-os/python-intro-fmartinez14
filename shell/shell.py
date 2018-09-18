@@ -6,6 +6,8 @@ import os, sys, time, re , subprocess
 pid = os.getpid()
 while(1): #Execute until Control C or exit command.
     try:
+        if os.path.exists("shell.tmp"):
+          os.remove("shell.tmp")
         pathToUse= os.environ['PATH']
         try:
             PS1 = os.environ['PS1']
@@ -50,20 +52,23 @@ while(1): #Execute until Control C or exit command.
                         UserInput= UserInput[:getIndex] #Overwrite the parameters with just what is required to execute.
                     if '<' in UserInput:
                         getIndex = UserInput.index('<') #Look for the pipe, if the file is found, execute it.
-                        newParams = open(UserInput[getIndex+1],"r").read().strip()
-                        command = UserInput[0];
-                        UserInput.clear() #Format new parameters to fit the syntax.
-                        UserInput.append(command)
-                        UserInput= UserInput+ newParams.split(' ')
+                        UserInput.remove('<')
+                        open(UserInput[getIndex],"r")
+                        readFile= os.open(UserInput[getIndex],os.O_RDONLY)
+                        os.dup2(readFile,0)
 
                     if '|' in UserInput: #Gets a pipe to execute commands and use them as process.
                         getIndex = UserInput.index('|')
                         extraParams = UserInput[:getIndex]
                         UserInput = UserInput[getIndex+1:]
-                        extraPipeCommand = subprocess.Popen(extraParams,stdout=subprocess.PIPE)
-                        addMe= extraPipeCommand.communicate() #Gets outway pipe.
-                        addMe = addMe[0].decode("utf-8").strip()
-                        UserInput.append(addMe)
+                        extraPipeCommand = subprocess.Popen(extraParams,stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+                        stdinPipe = extraPipeCommand.communicate()[0]
+                        writeOut = open("shell.tmp","w+")
+                        writeOut.write(stdinPipe.decode())
+                        writeOut.close()
+                        open("shell.tmp","r")
+                        readFile= os.open("shell.tmp",os.O_RDONLY)
+                        os.dup2(readFile,0)
 
                     if '&' in UserInput:
                         getIndex= UserInput.index('&')
