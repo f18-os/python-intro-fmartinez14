@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-import os, sys, time, re , subprocess, io
+import os, sys, time, re , subprocess
 
 
 pid = os.getpid()
@@ -8,13 +8,15 @@ while(1): #Execute until Control C or exit command.
     try:
         pathToUse= os.environ['PATH']
         try:
-            PS1 = os.environ['ps1']
+            PS1 = os.environ['PS1']
         except: #Check for PS1 Existing
-            PS1="$ "
+            PS1= os.getcwd() + "$ "
 
         instruction = ""
-        instruction = input(os.getcwd() + PS1) #Obtain command to run.
+        instruction = input(PS1) #Obtain command to run.
+        instruction = instruction.strip()
         UserInput = instruction.split(" ")
+
 
         if "cd" in UserInput: #Change directory
             getIndex = UserInput.index('cd')
@@ -66,11 +68,13 @@ while(1): #Execute until Control C or exit command.
                     if '&' in UserInput:
                         getIndex= UserInput.index('&')
                         del UserInput[getIndex]
+                        open(os.devnull,"w+") #Open file.
                         writeFile= os.open(os.devnull,os.O_WRONLY) #According to python documentation, this sets the write only flag. We write to a null file so the output isnt shown.
                         os.dup2(writeFile,1) #Duplicate the file
 
                     if len(UserInput) < 1 or UserInput[0] == "" or UserInput[0] == "cd":
-                        sys.exit(0) #Kill the kid without exec if its an implemented feature.
+                        os._exit(0) #Kill the kid without exec if its an implemented feature.
+
 
                     os.execve(program, UserInput, os.environ) # try to exec program
                 except FileNotFoundError:             # ...expected
@@ -78,13 +82,12 @@ while(1): #Execute until Control C or exit command.
                 except ValueError: #Exception returned by the index if it does not contain > or <.
                     pass
 
-            os.write(2, ("Could not find this command: %s\n" % UserInput[0]).encode())
-            sys.exit(0)
+            print("Could not find this command:" + str(UserInput[0]))
+            os._exit(0)
 
         else:
             if '&' in UserInput: #Do not wait if the # is present.
                 pass
-
             else:
                 childPidCode = os.wait() #Wait until child dies.
                 code, error = childPidCode
@@ -92,6 +95,5 @@ while(1): #Execute until Control C or exit command.
                     print("Process terminated with this exit code:  " + str(error))
 
     except EOFError: #If eof is passed to program, termiante.
-        print("")
         sys.exit(0)
 sys.exit(0) #Kill process if control c or exit.
