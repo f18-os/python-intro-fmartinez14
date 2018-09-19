@@ -36,12 +36,6 @@ while(1): #Execute until Control C or exit command.
             os.chdir(UserInput[getIndex + 1])
 
 
-        # print("------------------------------------------------------------------------")
-        # print(str(UserInput))
-        # print(str(len(UserInput)))
-        # print("------------------------------------------------------------------------")
-        # print(len(instruction))
-
         rc = os.fork()
 
 
@@ -63,8 +57,6 @@ while(1): #Execute until Control C or exit command.
             for dir in re.split(":", pathToUse): # try each directory in the path
                 program = "%s/%s" % (dir, UserInput[0])
                 try:
-                    # os.dup2(SystemIn,0)
-                    # os.dup2(SystemOut,1)
                     if '>' in UserInput:
                         getIndex = UserInput.index('>')
                         open(UserInput[getIndex+1],"w+") #Open file.
@@ -90,71 +82,23 @@ while(1): #Execute until Control C or exit command.
                             writeFile= os.open("shll.tmp",os.O_RDWR) #According to python documentation, this sets the write only flag.
                             os.dup2(writeFile,1) #Duplicate the file
 
-                        # if not instruction:
-                        #     print("dont worry you fuck")
-                        #
-                            # tmp= open("shll.tmp","r") #Open file.
-                            # readFile= os.open("shll.tmp",os.O_RDONLY) #According to python documentation, this sets the write only flag.
-                            # os.dup2(readFile,0) #Duplicate the file
-                            #
-                            # os.close(1)
-                            # os.close(pw)
-                            # os.close(pr)
-                            # for line in fileinput.input(): #Debug : Read from stdin.
-                            #     print("From child: <%s>" % line)
-
 
                         getIndex = UserInput.index('|')
                         if UserInput.count('|') >= 1:
                             UserInput= UserInput[:getIndex]
 
 
-
-                        # if len(instruction) > 0:
-                        #     # os.dup2(pw,sys.stdout.fileno())
-
-                        # os.close(sys.stdout.fileno())
-
-                        # tempDup= os.dup(pw)
-                            # os.close(1)
-                            # os.dup2(pw,1)
-                            # for fd in (pr, pw):
-                            #     os.close(fd)
-
-                            # os.close(0)
-                            # os.dup2(pr,0)
-                            # for fd in (pw, pr):
-                            #     os.close(fd)
-
-
-                        # else:
-                        #     open("leTemp.tmp","w+") #Open file.
-                        #     writeFile= os.open("leTemp.tmp",os.O_WRONLY) #According to python documentation, this sets the write only flag.
-                        #     os.dup2("leTemp.tmp",1) #Duplicate the file
-
-
-
-
-                        # extraPipeCommand = subprocess.Popen(extraParams,stdin=subprocess.PIPE,stdout=subprocess.PIPE)
-                        # stdinPipe = extraPipeCommand.communicate()[0]
-                        # writeOut = open("shell.tmp","w+")
-                        # writeOut.write(stdinPipe.decode())
-                        # writeOut.close()
-                        # open("shell.tmp","r")
-                        # readFile= os.open("shell.tmp",os.O_RDONLY)
-                        # os.dup2(readFile,0)
-
                     if '&' in UserInput:
                         getIndex= UserInput.index('&')
-                        del UserInput[getIndex]
+                        UserInput=UserInput[getIndex+1:]
+                        os.close(1)                 # redirect child's stdout
+                        os.close(0)
+                        os.dup2(pw,1)
+                        os.dup2(pr,0)
+                        for fd in (pr, pw):
+                            os.close(fd)
 
 
-
-                        # open(os.devnull,"w+") #Open file.
-                        # writeFile= os.open(os.devnull,os.O_WRONLY) #According to python documentation, this sets the write only flag. We write to a null file so the output isnt shown.
-                        # readFile= os.open(os.devnull,os.O_RDONLY)
-                        # os.dup2(readFile,0)
-                        # os.dup2(writeFile,1) #Duplicate the file
 
                     if len(UserInput) < 1 or UserInput[0] == "" or UserInput[0] == "cd":
                         os._exit(0) #Kill the kid without exec if its an implemented feature.
@@ -190,10 +134,10 @@ while(1): #Execute until Control C or exit command.
 
                 instruction = ""
 
-
             elif '&' in UserInput: #Do not wait if the # is present.
                 getIndex= UserInput.index('&')
-                del UserInput[getIndex]
+                instruction = ""
+                UserInput= UserInput[:getIndex]
                 pass
 
             else:
