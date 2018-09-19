@@ -15,10 +15,8 @@ Similarly, the shell folder contains a shell project that is run by using the fo
 
 It works using a bash-like commands which gets executed using the execv tool.
 
-This shell was done with documentation from the OS library in python at:
+It supports both I/O redirects, piping and background.
 
-https://docs.python.org/2/library/os.html
+To test it against the shell program, one must run:
 
- This project was done in Python 3.
-
- Fernando Martinez.
+`./shellTest.sh ./shell.py`

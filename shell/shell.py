@@ -74,7 +74,6 @@ while(1): #Execute until Control C or exit command.
 
                         if UserInput[-1]=='|':
                             instruction=""
-                            print("deleting")
                             del UserInput[-1]
 
                         if instruction:
