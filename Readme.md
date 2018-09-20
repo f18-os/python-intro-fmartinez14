@@ -17,6 +17,8 @@ It works using a bash-like commands which gets executed using the execv tool.
 
 It supports both I/O redirects, piping and background.
 
+This program will work using more than one pipe. However, it will display the output of all the pipes one at a time. Therefore, it will show as failed in the shell tester. Inside the shell, it will work and complete the command.
+
 To test it against the shell program, one must run:
 
 `./shellTest.sh ./shell.py`
