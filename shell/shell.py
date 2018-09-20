@@ -2,13 +2,6 @@
 
 import os, sys, time, re , subprocess, fileinput
 UserInput=[]
-remainingPipes=-1
-pr,pw = os.pipe()
-for f in (pr, pw):
-    os.set_inheritable(f, True)
-
-SystemOut= os.dup(1)
-SystemIn=os.dup(0)
 
 pid = os.getpid()
 instruction = ""
@@ -61,17 +54,16 @@ while(1): #Execute until Control C or exit command.
                         getIndex = UserInput.index('>')
                         open(UserInput[getIndex+1],"w+") #Open file.
                         writeFile= os.open(UserInput[getIndex+1],os.O_WRONLY) #According to python documentation, this sets the write only flag.
-                        os.dup2(writeFile,1) #Duplicate the file
+                        os.dup2(writeFile,1) #Duplicate the file descriptor
                         UserInput= UserInput[:getIndex] #Overwrite the parameters with just what is required to execute.
                     if '<' in UserInput:
                         getIndex = UserInput.index('<') #Look for the pipe, if the file is found, execute it.
                         UserInput.remove('<')
-                        open(UserInput[getIndex],"r")
+                        open(UserInput[getIndex],"r") #Same idea of file descriptor.
                         readFile= os.open(UserInput[getIndex],os.O_RDONLY)
-                        os.dup2(readFile,0)
+                        os.dup2(readFile,0) #Dup2 Will move the readFile file descriptor into the std input and output depending if its a < or a >. This way the output will be redirected.
 
                     if '|' in UserInput: #Gets a pipe to execute commands and use them as process.
-
                         if UserInput[-1]=='|':
                             instruction=""
                             del UserInput[-1]
@@ -82,14 +74,14 @@ while(1): #Execute until Control C or exit command.
                             os.dup2(writeFile,1) #Duplicate the file
 
 
-                        getIndex = UserInput.index('|')
+                        getIndex = UserInput.index('|') #Move the command to the first command in line.
                         if UserInput.count('|') >= 1:
                             UserInput= UserInput[:getIndex]
 
 
                     if '&' in UserInput:
                         getIndex= UserInput.index('&')
-                        UserInput=UserInput[getIndex+1:]
+                        UserInput=UserInput[getIndex+1:] #Get second command
                         os.close(1)                 # redirect child's stdout
                         os.close(0)
                         os.dup2(pw,1)
